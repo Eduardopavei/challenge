@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo List</title>
+<style>
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    li {
+        margin-bottom: 5px;
+    }
+    .edit-button, .remove-button {
+        padding: 4px;
+        margin-right: 8px;
+    }   
+</style>
+</head>
+<body>
+
+<h1>Todo List</h1>
+
+<input type="text" id="newItem" placeholder="Digite o nome de item">
+<select id="status">
+    <option value="Não concluído  ">Não concluído</option>
+    <option value="Concluído  ">Concluído</option>
+</select>
+<button onclick="addItem()">Adicionar</button>
+
+<ul id="todoList"></ul>
+
+<script>
+    let todoList = [];
+
+    function loadTodoList() {
+        todoList = JSON.parse(localStorage.getItem("todoList")) || [];
+        displayTodoList();
+    }
+
+    function saveTodoList() {
+        localStorage.setItem("todoList", JSON.stringify(todoList));
+    }
+
+    function addItem() {
+        const newItemInput = document.getElementById("newItem");
+        const newItemContent = newItemInput.value.trim();
+        const newItemStatus = document.getElementById("status").value;
+        if (newItemContent !== "") {
+            const newId = todoList.length + 1;
+            const newItem = { id: newId, content: newItemContent, status: newItemStatus };
+            todoList.push(newItem);
+            newItemInput.value = "";
+            saveTodoList();
+            displayTodoList();
+        } else {
+            alert("Por favor, insira um item válido.");
+        }
+    }
+
+    function removeItem(id) {
+        const confirmRemove = confirm("Tem certeza que deseja remover este item?");
+        if (confirmRemove) {
+            todoList = todoList.filter(item => item.id !== id);
+            saveTodoList();
+            displayTodoList();
+        }
+    }
+
+    function editStatus(id, newStatus) {
+        todoList.forEach(item => {
+            if (item.id === id) {
+                item.status = newStatus;
+            }
+        });
+        saveTodoList();
+        displayTodoList();
+    }
+
+    function displayTodoList() {
+        const todoListElement = document.getElementById("todoList");
+        todoListElement.innerHTML = "";
+        todoList.forEach(item => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `ID: ${item.id} - ${item.content} - Status: ${item.status}`;
+            
+            const editButton = document.createElement("button");
+            editButton.textContent = "Editar";
+            editButton.className = "edit-button";
+            editButton.onclick = () => showEditDropdown(item.id, item.status);
+            
+            const removeButton = document.createElement("button");
+            removeButton.textContent = "Remover";
+            removeButton.className = "remove-button";
+            removeButton.onclick = () => removeItem(item.id);
+            
+            listItem.appendChild(editButton);
+            listItem.appendChild(removeButton);
+            todoListElement.appendChild(listItem);
+        });
+    }
+
+    function showEditDropdown(itemId, currentStatus) {
+        const listItem = document.querySelector(`#todoList li:nth-child(${itemId})`);
+        listItem.innerHTML = ""; 
+        const statusDropdown = document.createElement("select");
+        statusDropdown.innerHTML = `
+            <option value="Não concluído">Não concluído</option>
+            <option value="Concluído">Concluído</option>
+        `;
+        statusDropdown.value = currentStatus;
+        statusDropdown.onchange = () => {
+            editStatus(itemId, statusDropdown.value);
+            displayTodoList(); 
+        };
+        listItem.appendChild(statusDropdown);
+    }
+
+    loadTodoList();
+</script>
+
+</body>
+</html>
